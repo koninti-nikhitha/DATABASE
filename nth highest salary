@@ -1,0 +1,72 @@
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+  DECLARE off INT;
+  SET off = N - 1;
+
+  RETURN (
+    SELECT DISTINCT salary
+    FROM Employee
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET off
+  );
+END
+
+explaination:
+Alright — let’s unpack what’s going on step-by-step so the nth highest salary problem and the MySQL quirks make sense.
+1. The Problem
+You have a table:
+id	salary
+1	100
+2	200
+3	300
+You need a query or function to get the nth highest distinct salary.
+If n = 1 → highest salary (300 here)
+If n = 2 → second highest salary (200 here)
+If n is greater than the number of distinct salaries → return NULL.
+2. Why DISTINCT and ORDER BY
+Without DISTINCT, repeated salaries would mess up the ranking.
+Example:
+id	salary
+1	300
+2	300
+3	200
+If you just sorted and grabbed the second row, you’d still get 300 — wrong.
+DISTINCT salary ensures you only consider unique salaries.
+ORDER BY salary DESC puts the highest at the top.
+3. OFFSET logic
+The idea:
+Highest salary is row 0 after sorting.
+Second highest is row 1.
+Third highest is row 2.
+That means the offset is always n - 1.
+Example for n = 2:
+SELECT DISTINCT salary
+FROM Employee
+ORDER BY salary DESC
+LIMIT 1 OFFSET 1;  -- skip first row, take one value
+4. Why you get syntax errors in MySQL
+In MySQL stored functions, the parser doesn’t like arithmetic expressions (N-1) directly inside OFFSET when N is a parameter.
+It works in LeetCode’s SQL sandbox because they allow it.
+But in standard MySQL, you must:
+Create a variable (e.g., off).
+Set it to N - 1.
+Use it in the OFFSET.
+That’s why the working MySQL version is:
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+  DECLARE off INT;        -- step 1: declare variable
+  SET off = N - 1;        -- step 2: calculate offset
+
+  RETURN (
+    SELECT DISTINCT salary
+    FROM Employee
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET off    -- step 3: use variable
+  );
+END
+5. NULL case
+If n is bigger than the number of distinct salaries, the subquery returns no row → the RETURN expression is NULL.
+Example:
+Only salaries are {100}, ask for n = 2 → no row, so NULL.
+
+
