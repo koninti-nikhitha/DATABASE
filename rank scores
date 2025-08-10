@@ -1,0 +1,12 @@
+SELECT
+  score,
+  DENSE_RANK() OVER (ORDER BY score DESC) AS `rank`
+FROM Scores
+ORDER BY score DESC;
+
+
+DENSE_RANK is a SQL window function that assigns rankings to rows without skipping numbers when there are ties.
+Think of it like handing out medals:
+
+If two people tie for first place, they both get rank 1.
+The next person is rank 2 (not 3), because we don’t leave a “hole” after the tie.
